@@ -3,16 +3,12 @@ import kotlin.math.pow
 enum class State { Running, Stopped, Paused }
 
 class IntCodeComputer(code: List<Long>) {
-    class Memory(private val list: MutableList<Long>) : MutableList<Long> by list {
-        override operator fun get(index: Int): Long {
-            return if (index >= list.size) 0L else list[index]
-        }
+    class InfinityMemory(private val list: MutableList<Long>) : MutableList<Long> by list {
+        override operator fun get(index: Int): Long = list.getOrElse(index) { 0L }
 
         override operator fun set(index: Int, element: Long): Long {
             if (index >= list.size) list.addAll(Array(index - list.size + 1) { 0L })
-            val prev = list[index]
-            list[index] = element
-            return prev
+            return list.set(index, element)
         }
     }
 
@@ -21,7 +17,7 @@ class IntCodeComputer(code: List<Long>) {
 
     val input = mutableListOf<Long>()
     val output = mutableListOf<Long>()
-    val memory = Memory(code.toMutableList())
+    val memory = InfinityMemory(code.toMutableList())
     var state = State.Running
 
     private fun mode(offset: Int) = memory[pointer]
@@ -40,14 +36,14 @@ class IntCodeComputer(code: List<Long>) {
         else -> throw Exception("Wong get mode")
     }
 
-    private fun set(offset: Int, v: Long) {
+    private fun set(offset: Int, getVal: () -> Long) {
         val realPointer = when (mode(offset)) {
             0 -> getImmediate(offset).toInt()
             1 -> offset
             2 -> relativeBase + getImmediate(offset).toInt()
             else -> throw Exception("Wong set mode")
         }
-        memory[realPointer] = v
+        memory[realPointer] = getVal()
     }
 
     fun run(nextPointer: Int = 0) {
@@ -56,18 +52,18 @@ class IntCodeComputer(code: List<Long>) {
 
         return when (val operation = memory[pointer].rem(100).toInt()) {
             1 -> {
-                set(3, get(1) + get(2))
+                set(3) { get(1) + get(2) }
                 run(pointer + 4)
             }
             2 -> {
-                set(3, get(1) * get(2))
+                set(3) { get(1) * get(2) }
                 run(pointer + 4)
             }
             3 -> {
                 if (input.isEmpty())
                     state = State.Paused
                 else {
-                    set(1, input.removeAt(0))
+                    set(1) { input.removeAt(0) }
                     run(pointer + 2)
                 }
             }
@@ -82,11 +78,11 @@ class IntCodeComputer(code: List<Long>) {
                 run(if (get(1) == 0L) get(2).toInt() else pointer + 3)
             }
             7 -> {
-                set(3, if (get(1) < get(2)) 1L else 0L)
+                set(3) { if (get(1) < get(2)) 1L else 0L }
                 run(pointer + 4)
             }
             8 -> {
-                set(3, if (get(1) == get(2)) 1L else 0L)
+                set(3) { if (get(1) == get(2)) 1L else 0L }
                 run(pointer + 4)
             }
             9 -> {
