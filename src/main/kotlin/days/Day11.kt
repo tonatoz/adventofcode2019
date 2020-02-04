@@ -16,7 +16,6 @@ object Day11 : DayInterface() {
         private var direction = Directions.Up
 
         val field = mutableMapOf<Pair<Int, Int>, Long>(coords to initialPanelColor)
-        val visited = mutableListOf<Pair<Int, Int>>()
 
         private fun getDirection(newDirection: Long) = when (direction) {
             Directions.Up -> if (newDirection == 0L) Directions.Left else Directions.Right
@@ -39,18 +38,17 @@ object Day11 : DayInterface() {
                 run()
             }.output.takeLast(2)
 
-            visited.add(coords)
             field[coords] = newColor
             direction = getDirection(newDirection)
             coords = getCoords()
         }
 
         fun draw() {
-            while (computer.state != State.Stopped) nextMove()
+            while (computer.status != Status.Stopped) nextMove()
         }
     }
 
-    override fun step1() = Robot().apply { draw() }.visited.distinct().count().toString()
+    override fun step1() = Robot().apply { draw() }.field.keys.count().toString()
 
     override fun step2(): String {
         val field = Robot(1L).apply { draw() }.field

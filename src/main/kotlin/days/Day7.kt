@@ -37,9 +37,9 @@ object Day7 : DayInterface() {
         val chain = List(order.size) { IntCodeComputer(code) }
         var lastOut = 0L
         var i = 0
-        while (chain.all { it.state == State.Stopped }.not()) {
+        while (chain.all { it.status == Status.Stopped }.not()) {
             lastOut = chain[i].apply {
-                if (state != State.Paused) input.add(order[i])
+                if (status != Status.Paused) input.add(order[i])
                 input.add(lastOut)
                 run()
             }.output.last()

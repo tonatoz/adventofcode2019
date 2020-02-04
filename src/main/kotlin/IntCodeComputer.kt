@@ -1,6 +1,6 @@
 import kotlin.math.pow
 
-enum class State { Running, Stopped, Paused }
+enum class Status { Running, Stopped, Paused }
 
 class IntCodeComputer(code: List<Long>) {
     class InfinityMemory(private val list: MutableList<Long>) : MutableList<Long> by list {
@@ -18,7 +18,7 @@ class IntCodeComputer(code: List<Long>) {
     val input = mutableListOf<Long>()
     val output = mutableListOf<Long>()
     val memory = InfinityMemory(code.toMutableList())
-    var state = State.Running
+    var status = Status.Running
 
     private fun mode(offset: Int) = memory[pointer]
         .div(10.0.pow(1.0 + offset))
@@ -47,8 +47,8 @@ class IntCodeComputer(code: List<Long>) {
     }
 
     fun run(nextPointer: Int = 0) {
-        if (state == State.Running) pointer = nextPointer // Avoid replacing pointer form Paused state
-        state = State.Running
+        if (status == Status.Running) pointer = nextPointer // Avoid replacing pointer form Paused state
+        status = Status.Running
 
         return when (val operation = memory[pointer].rem(100).toInt()) {
             1 -> {
@@ -61,7 +61,7 @@ class IntCodeComputer(code: List<Long>) {
             }
             3 -> {
                 if (input.isEmpty())
-                    state = State.Paused
+                    status = Status.Paused
                 else {
                     set(1) { input.removeAt(0) }
                     run(pointer + 2)
@@ -89,7 +89,7 @@ class IntCodeComputer(code: List<Long>) {
                 relativeBase += get(1).toInt()
                 run(pointer + 2)
             }
-            99 -> state = State.Stopped
+            99 -> status = Status.Stopped
             else -> throw Exception("Wrong opcode $operation at mem ${memory[pointer]}")
         }
     }
